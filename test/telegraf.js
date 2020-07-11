@@ -1,6 +1,5 @@
 const test = require('ava')
-const Telegraf = require('../')
-const { session } = Telegraf
+const { Telegraf, session } = require('../')
 
 const BaseTextMessage = {
   chat: { id: 1 },
@@ -285,8 +284,8 @@ test.cb('should work with context extensions', (t) => {
 
 test.cb('should handle webhook response', (t) => {
   const bot = new Telegraf()
-  bot.on('message', async ({ reply }) => {
-    const result = await reply(':)')
+  bot.on('message', async (ctx) => {
+    const result = await ctx.replyWithChatAction('typing')
     t.deepEqual(result, { webhook: true })
   })
   const res = {
@@ -304,7 +303,7 @@ const resStub = {
 test.cb('should respect webhookReply option', (t) => {
   const bot = new Telegraf(null, { telegram: { webhookReply: false } })
   bot.catch((err) => { throw err }) // Disable log
-  bot.on('message', ({ reply }) => reply(':)'))
+  bot.on('message', async (ctx) => ctx.replyWithChatAction('typing'))
   t.throwsAsync(bot.handleUpdate({ message: BaseTextMessage }, resStub)).then(() => t.end())
 })
 
@@ -312,7 +311,7 @@ test.cb('should respect webhookReply runtime change', (t) => {
   const bot = new Telegraf()
   bot.webhookReply = false
   bot.catch((err) => { throw err }) // Disable log
-  bot.on('message', (ctx) => ctx.reply(':)'))
+  bot.on('message', async (ctx) => ctx.replyWithChatAction('typing'))
 
   // Throws cause Bot Token is required for http call'
   t.throwsAsync(bot.handleUpdate({ message: BaseTextMessage }, resStub)).then(() => t.end())
@@ -323,7 +322,7 @@ test.cb('should respect webhookReply runtime change (per request)', (t) => {
   bot.catch((err) => { throw err }) // Disable log
   bot.on('message', async (ctx) => {
     ctx.webhookReply = false
-    return ctx.reply(':)')
+    return ctx.replyWithChatAction('typing')
   })
   t.throwsAsync(bot.handleUpdate({ message: BaseTextMessage }, resStub)).then(() => t.end())
 })
